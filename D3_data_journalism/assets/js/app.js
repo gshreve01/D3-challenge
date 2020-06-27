@@ -3,13 +3,13 @@ d3.select(window).on("resize", handleResize);
 
 // Initialize possible data points collection
 var censusDataPoints = [
-    { 'id': 1, 'Name': 'smokes', 'Tooltip': 'Smokers' }
+    { 'id': 1, 'Name': 'smokes', 'Tooltip': 'Smokers', 'AxisTitle': 'People Who Smoke %' }
     ,
-    { 'id': 2, 'Name': 'age', 'Tooltip': 'Age' }
+    { 'id': 2, 'Name': 'income', 'Tooltip': 'Income', 'AxisTitle': 'Avg Household Income' }
 ];
 
-var selectedYDataPoint = 'age';
-var selectedXDataPoint = 'smokes';
+var selectedXAxis = 0;
+var selectedYAxis = 1;
 
 // When the browser loads, loadChart() is called
 loadChart();
@@ -82,12 +82,17 @@ function loadChart() {
     var margin = {
         top: 30,
         right: 30,
-        bottom: 30,
-        left: 30
+        bottom: 80,
+        left: 80
     };
     var chartWidth = svgWidth - margin.left - margin.right;
     var chartHeight = svgHeight - margin.top - margin.bottom;
 
+    var selectedYDataPoint = censusDataPoints[selectedYAxis].Name;
+    console.log("selectedYDataPoint", selectedYDataPoint);
+    var selectedXDataPoint = censusDataPoints[selectedXAxis].Name;
+    console.log("selectedXDataPoint", selectedXDataPoint);
+ 
     // Create the svg....it should have been removed if it existed
     var svg = d3.select("#scatter").append("svg")
         .attr("height", svgHeight)
@@ -117,8 +122,28 @@ function loadChart() {
         var bottomAxis = d3.axisBottom(xLinearScale);
         var leftAxis = d3.axisLeft(yLinearScale);
 
+        // append initial circles
+        var circlesGroup = chartGroup.selectAll("circle")
+            .data(censusData)
+            .enter()
+            .append("circle")
+            .attr("cx", d => xLinearScale(d[selectedXDataPoint]))
+            .attr("cy", d => yLinearScale(d[selectedYDataPoint]))
+            .attr("r", 15)
+            .classed("stateCircle", true);
+
+        var textsGroup = chartGroup.selectAll("text")
+            .data(censusData)
+            .enter()
+            .append("text")
+            .attr("x", d => xLinearScale(d[selectedXDataPoint]))
+            .attr("y", d => yLinearScale(d[selectedYDataPoint]) + 4)
+            .classed("stateText", true)
+            .attr("text-anchor", "middle")
+            .text((d) => d.abbr);
+
         // append x axis
-        var xAxis = chartGroup.append("g")
+        chartGroup.append("g")
             // .classed("x-axis", true)
             .attr("transform", `translate(0, ${chartHeight})`)
             .call(bottomAxis);
@@ -127,16 +152,24 @@ function loadChart() {
         chartGroup.append("g")
             .call(leftAxis);
 
-        // append initial circles
-        var circlesGroup = chartGroup.selectAll("circle")
-            .data(censusData)
-            .enter()
-            .append("circle")
-            .attr("cx", d => xLinearScale(d[selectedXDataPoint]))
-            .attr("cy", d => yLinearScale(d[selectedYDataPoint]))
-            .attr("r", 10)
-            .attr("fill", "blue")
-            .attr("opacity", ".4");
+        // XAxis Title
+            chartGroup.append("text")
+            // Position the text
+            // Center the text:
+            // (https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/text-anchor)
+            .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + margin.top + 20})`)
+            .attr("text-anchor", "middle")
+            .classed("aText", true)
+            .text(censusDataPoints[selectedXAxis].AxisTitle);
+
+        // YAxis Title
+        chartGroup.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - (margin.left))
+        .attr("x", 0 - (chartHeight / 2))
+        .attr("dy", "1em")
+        .classed("aText", true)
+        .text(censusDataPoints[selectedYAxis].AxisTitle);       
 
     })
         .catch(function (error) {
