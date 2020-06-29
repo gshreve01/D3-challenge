@@ -1,7 +1,8 @@
 .aText {
   font-family: sans-serif;
-  font-size: 16px;
+  font-size: 24px;
   text-anchor: middle;
+  font-weight: 800;
 }
 
 .active {
@@ -27,6 +28,7 @@
 .stateText {
   font-family: 'Arial Black';
   fill: #fff;
+  font-size:14px;
   text-anchor: middle;
 }
 
@@ -60,8 +62,8 @@
 
   .aText {
     font-size: 14px;
-    font-family: 'Arial';
-    font-weight: 700;
+    font-family: 'Arial Black';
+    font-weight: 1000;
     fill: #000;
   }
 }
