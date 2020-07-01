@@ -7,9 +7,11 @@ var censusDataPoints = [
     ,
     { 'id': 2, 'Name': 'income', 'Tooltip': 'Income', 'AxisTitle': 'Avg Household Income', 'Format': '$' }
     ,
-    { 'id': 3, 'Name': 'obesity', 'Tooltip': 'Obesity', 'AxisTitle': 'Obese (%)', 'Format': '%' }    
+    { 'id': 3, 'Name': 'obesity', 'Tooltip': 'Obesity', 'AxisTitle': 'Obese (%)', 'Format': '%' }
     ,
-    { 'id': 4, 'Name': 'poverty', 'Tooltip': 'Poverty', 'AxisTitle': 'In Poverty (%)', 'Format': '%' }
+    { 'id': 4, 'Name': 'poverty', 'Tooltip': 'In Poverty', 'AxisTitle': 'In Poverty (%)', 'Format': '%' }
+    ,
+    { 'id': 5, 'Name': 'healthcare', 'Tooltip': 'No Healthcare', 'AxisTitle': 'Without Healthcare (%)', 'Format': '%' }
 ];
 
 var selectedXAxis = 1;
@@ -149,26 +151,50 @@ function parseCensusData(data, selectedXDataPoint, selectedYDataPoint) {
     data.selectedYAxis = selectedYAxis;
 }
 
-function UpdateToolTips(circlesGroup) {
+function TooltipNumberFormat(format, number) {
+    var formatValue = number;
+    switch (format) {
+        case "%":
+            formatValue += "%";
+            break;
+        case "$":
+            formatValue = "$" + new Intl.NumberFormat().format(+number);
+    }
+    return formatValue;   
+}
+
+function UpdateToolTips(tooltipGroup) {
     // Step 1: Initialize Tooltip
     var toolTip = d3.tip()
         .attr("class", "d3-tip")
-        .offset([45, -55])
+        .offset([45, -62])
         .html(function (d) {
+            var xValue = d.xAxisValue;
+            var yValue = d.yAxisValue;
+
+            console.log("format", d.xAxisFormat);
+
+            // Format values
+            switch (d.xAxisFormat) {
+                case "%":
+                    xValue += "%";
+                    break;
+                case "$":
+                    xValue = "$" + new Intl.NumberFormat().format(xValue);
+            }
             return (`<strong>${d.state}</strong><br><div class="tooltipInfo">
-                <strong>${d.xAxisValueName}</strong>: ${d.xAxisValue}<br>
-                <strong>${d.yAxisValueName}</strong>: ${d.yAxisValue}</div>`);
+                <strong>${d.xAxisValueName}</strong>: ${TooltipNumberFormat(d.xAxisFormat, d.xAxisValue)}<br>
+                <strong>${d.yAxisValueName}</strong>: ${TooltipNumberFormat(d.yAxisFormat, d.yAxisValue)}</div>`);
         });
 
     // Step 2: Create the tooltip in chartGroup.
     chartGroup.call(toolTip);
 
     // Step 3: Create "mouseover" event listener to display tooltip
-    circlesGroup.on("mouseover", function (d) {
-        console.log("d", d);
+    tooltipGroup.on("mouseover", function (d) {
+        console.log("d, this", d);
 
         // Get the Tooltip and value name
-
         var xAxisDataPoint = getCensusDataPoint(selectedXAxis)
         var yAxisDataPoint = getCensusDataPoint(selectedYAxis);
 
@@ -183,6 +209,8 @@ function UpdateToolTips(circlesGroup) {
             , "xAxisValue": d[selectedXDataPoint]
             , "yAxisValueName": yTooltipName
             , "yAxisValue": d[selectedYDataPoint]
+            , "xAxisFormat": xAxisDataPoint.Format
+            , "yAxisFormat": yAxisDataPoint.Format
         };
         console.log("tooltipInfo", tooltipInfo);
         toolTip.show(tooltipInfo, this);
@@ -227,9 +255,10 @@ function RenderAxises(censusData, chartWidth, chartHeight, xLinearScale, yLinear
     var leftAxis = d3.axisLeft(yLinearScale);
 
     // append x axis
-    chartGroup.append("g")
-        // .classed("x-axis", true)
+    chartGroup
+        .append("g")
         .attr("transform", `translate(0, ${chartHeight})`)
+        // .classed("x-axis", true)
         .call(bottomAxis);
 
     // append y axis
@@ -304,7 +333,6 @@ function loadChart() {
     d3.csv("assets/data/data.csv").then(function (censusData, err) {
         // if an error occured throw it
         if (err) throw err;
-
 
         // parse the data converting all columns to numerics in csv file 
         // (including id)

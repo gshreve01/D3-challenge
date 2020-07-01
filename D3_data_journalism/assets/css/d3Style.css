@@ -30,7 +30,10 @@
   fill: #fff;
   font-size:14px;
   text-anchor: middle;
+  /* pointer-events: none; */
 }
+
+.text {pointer-events: none}
 
 .stateCircle {
   fill: #89bdd3;
